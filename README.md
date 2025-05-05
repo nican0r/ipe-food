@@ -1,6 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Todo
+- [ ] admin panel for modifying items
+- [ ] admin panel to mark orders as completed on delivery
+- [ ] connect to backend
+
+## Pages
+- `/` - main page where users add items to their cart
+- `/checkout` - page where users place order and pay
+- `/admin` - page for admin to see the orders for the day
+- `/admin/menu` - page for admin to modify menu items
 
 ## Getting Started
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 First, run the development server:
 
