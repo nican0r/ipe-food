@@ -1,103 +1,123 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { foodItems } from '@/data/food-items';
+import { FoodSize } from '@/types/food';
+import { useCart } from '@/context/cart-context';
+import Link from 'next/link';
+import { toast } from "sonner";
+import Image from 'next/image';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { addToCart, items, availableItems } = useCart();
+  const [selectedSizes, setSelectedSizes] = useState<Record<string, FoodSize>>({});
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const handleSizeChange = (itemId: string, size: FoodSize) => {
+    setSelectedSizes(prev => ({ ...prev, [itemId]: size }));
+  };
+
+  const handleAddToCart = (item: typeof foodItems[0], size: FoodSize) => {
+    const currentSize = selectedSizes[item.id] || 'medium';
+    const available = availableItems.find(i => i.id === item.id)?.available[currentSize] || 0;
+    
+    if (available <= 0) {
+      toast.error("Out of stock", {
+        description: `${item.name} (${currentSize}) is currently unavailable.`,
+      });
+      return;
+    }
+
+    addToCart(item, size);
+    toast.success(`${item.name} (${size}) added to cart`, {
+      description: `Price: $${item.price[size].toFixed(2)}`,
+    });
+  };
+
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  return (
+    <main className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Food Menu</h1>
+        <Link href="/checkout">
+          <Button variant="outline" className="relative">
+            View Cart
+            {totalItems > 0 && (
+              <Badge 
+                variant="secondary" 
+                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0"
+              >
+                {totalItems}
+              </Badge>
+            )}
+          </Button>
+        </Link>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {availableItems.map((item) => (
+          <Card key={item.id} className="flex flex-col overflow-hidden">
+            <div className="relative w-full aspect-[16/9]">
+              <Image
+                src={item.image}
+                alt={item.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority
+              />
+            </div>
+            <CardHeader className="pt-4">
+              <CardTitle>{item.name}</CardTitle>
+              <CardDescription>{item.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Size:</span>
+                  <Select
+                    value={selectedSizes[item.id] || 'medium'}
+                    onValueChange={(value) => handleSizeChange(item.id, value as FoodSize)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="medium">
+                        Medium ({item.weight.medium})
+                      </SelectItem>
+                      <SelectItem value="large">
+                        Large ({item.weight.large})
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="text-lg font-bold">
+                    ${item.price[selectedSizes[item.id] || 'medium'].toFixed(2)}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {item.available[selectedSizes[item.id] || 'medium']} available
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button
+                className="w-full"
+                onClick={() => handleAddToCart(item, selectedSizes[item.id] || 'medium')}
+                disabled={item.available[selectedSizes[item.id] || 'medium'] <= 0}
+              >
+                {item.available[selectedSizes[item.id] || 'medium'] <= 0 ? 'Out of Stock' : 'Add to Cart'}
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    </main>
   );
 }
