@@ -1,6 +1,7 @@
 ## Todo
 - [ ] admin panel for modifying items
 - [ ] admin panel to mark orders as completed on delivery
+- [ ] connect to backend
 
 ## Pages
 - `/` - main page where users add items to their cart
