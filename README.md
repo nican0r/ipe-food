@@ -1,5 +1,6 @@
 ## Todo
 - [ ] admin panel to mark orders as completed on delivery
+- [ ] fix updates of info from admin panel to reflect in main menu
 - [ ] connect to backend
 
 ## Pages
