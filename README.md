@@ -1,11 +1,8 @@
 ## Todo
-- [ ] admin panel to mark orders as completed on delivery
-- [ ] fix updates of info from admin panel to reflect in main menu
 - [ ] connect to backend
 
 ## Pages
 - `/` - main page where users add items to their cart
-- `/checkout` - page where users place order and pay
 - `/admin` - page for admin to see the orders for the day
 - `/admin/menu` - page for admin to modify menu items
 
