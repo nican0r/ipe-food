@@ -1,19 +1,19 @@
 'use client';
 
 import { useState, ChangeEvent, FormEvent } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { foodItems } from '@/data/food-items';
 import { FoodItem } from '@/types/food';
 import { ImageUpload } from '@/components/ui/image-upload';
 import Image from 'next/image';
+import { useMenu } from '@/context/menu-context';
 
 export default function MenuManagementPage() {
-  const [items, setItems] = useState<FoodItem[]>(foodItems);
+  const { foodItems, addFoodItem, updateFoodItem, deleteFoodItem } = useMenu();
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
 
@@ -45,27 +45,20 @@ export default function MenuManagementPage() {
   };
 
   const handleDeleteItem = (itemId: string) => {
-    setItems(items.filter(item => item.id !== itemId));
+    deleteFoodItem(itemId);
   };
 
-  const handleSaveItem = (e: FormEvent<HTMLFormElement>) => {
+  const handleSaveItem = (e: FormEvent) => {
     e.preventDefault();
+    
     if (!editingItem) return;
-
-    if (isAddingNew) {
-      // Add new item
-      const newItem = {
-        ...editingItem,
-        id: Math.random().toString(36).substr(2, 9) // Generate a random ID
-      };
-      setItems([...items, newItem]);
+    
+    if (editingItem) {
+      updateFoodItem(editingItem.id, editingItem);
     } else {
-      // Update existing item
-      setItems(items.map(item => 
-        item.id === editingItem.id ? editingItem : item
-      ));
+      addFoodItem(editingItem);
     }
-
+    
     setEditingItem(null);
     setIsAddingNew(false);
   };
@@ -130,11 +123,12 @@ export default function MenuManagementPage() {
                       <Label htmlFor="mediumPrice">Price</Label>
                       <Input
                         id="mediumPrice"
+                        name="price-medium"
                         type="number"
                         value={editingItem.price.medium}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingItem({
                           ...editingItem,
-                          price: { ...editingItem.price, medium: parseFloat(e.target.value) }
+                          price: { ...editingItem.price, medium: parseFloat(e.target.value) || 0 }
                         })}
                         required
                         min="0"
@@ -145,6 +139,7 @@ export default function MenuManagementPage() {
                       <Label htmlFor="mediumWeight">Weight</Label>
                       <Input
                         id="mediumWeight"
+                        name="weight-medium"
                         value={editingItem.weight.medium}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingItem({
                           ...editingItem,
@@ -157,11 +152,12 @@ export default function MenuManagementPage() {
                       <Label htmlFor="mediumAvailable">Available Quantity</Label>
                       <Input
                         id="mediumAvailable"
+                        name="available-medium"
                         type="number"
                         value={editingItem.available.medium}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingItem({
                           ...editingItem,
-                          available: { ...editingItem.available, medium: parseInt(e.target.value) }
+                          available: { ...editingItem.available, medium: parseInt(e.target.value) || 0 }
                         })}
                         required
                         min="0"
@@ -175,11 +171,12 @@ export default function MenuManagementPage() {
                       <Label htmlFor="largePrice">Price</Label>
                       <Input
                         id="largePrice"
+                        name="price-large"
                         type="number"
                         value={editingItem.price.large}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingItem({
                           ...editingItem,
-                          price: { ...editingItem.price, large: parseFloat(e.target.value) }
+                          price: { ...editingItem.price, large: parseFloat(e.target.value) || 0 }
                         })}
                         required
                         min="0"
@@ -190,6 +187,7 @@ export default function MenuManagementPage() {
                       <Label htmlFor="largeWeight">Weight</Label>
                       <Input
                         id="largeWeight"
+                        name="weight-large"
                         value={editingItem.weight.large}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingItem({
                           ...editingItem,
@@ -202,11 +200,12 @@ export default function MenuManagementPage() {
                       <Label htmlFor="largeAvailable">Available Quantity</Label>
                       <Input
                         id="largeAvailable"
+                        name="available-large"
                         type="number"
                         value={editingItem.available.large}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => setEditingItem({
                           ...editingItem,
-                          available: { ...editingItem.available, large: parseInt(e.target.value) }
+                          available: { ...editingItem.available, large: parseInt(e.target.value) || 0 }
                         })}
                         required
                         min="0"
@@ -229,56 +228,60 @@ export default function MenuManagementPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map((item) => (
-            <Card key={item.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle>{item.name}</CardTitle>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditItem(item)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteItem(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+          {foodItems.map((item) => (
+            <Card key={item.id} className="flex flex-col overflow-hidden">
+              <div className="relative w-full aspect-[16/9]">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority
+                />
+              </div>
+              <CardHeader className="pt-4">
+                <CardTitle>{item.name}</CardTitle>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Medium Size:</span>
+                    <div className="text-right">
+                      <div className="text-lg font-bold">${item.price.medium.toFixed(2)}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.weight.medium} - {item.available.medium} available
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Large Size:</span>
+                    <div className="text-right">
+                      <div className="text-lg font-bold">${item.price.large.toFixed(2)}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.weight.large} - {item.available.large} available
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </CardHeader>
+              </CardContent>
               <CardContent>
-                <div className="space-y-4">
-                  {item.image && (
-                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium text-sm">Medium</h4>
-                      <p className="text-sm">${item.price.medium}</p>
-                      <p className="text-sm text-muted-foreground">{item.weight.medium}</p>
-                      <p className="text-sm text-muted-foreground">Available: {item.available.medium}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Large</h4>
-                      <p className="text-sm">${item.price.large}</p>
-                      <p className="text-sm text-muted-foreground">{item.weight.large}</p>
-                      <p className="text-sm text-muted-foreground">Available: {item.available.large}</p>
-                    </div>
-                  </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleEditItem(item)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleDeleteItem(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
