@@ -14,4 +14,5 @@ export interface Order {
   total: number;
   items: OrderItem[];
   timestamp: number;
+  status: 'pending' | 'completed';
 } 

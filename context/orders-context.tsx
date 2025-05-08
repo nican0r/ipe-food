@@ -9,6 +9,7 @@ interface OrdersContextType {
   orders: Order[];
   addOrder: (address: string, items: CartItem[], total: number) => Order;
   getOrder: (id: string) => Order | undefined;
+  toggleOrderStatus: (orderId: string) => void;
   isLoading: boolean;
   error: string | null;
   retry: () => void;
@@ -104,7 +105,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         address,
         total,
         items: orderItems,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        status: 'pending'
       };
 
       setOrders(prev => [newOrder, ...prev]);
@@ -119,12 +121,23 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     return orders.find(order => order.id === id);
   };
 
+  const toggleOrderStatus = (orderId: string) => {
+    setOrders(prevOrders => 
+      prevOrders.map(order => 
+        order.id === orderId 
+          ? { ...order, status: order.status === 'pending' ? 'completed' : 'pending' }
+          : order
+      )
+    );
+  };
+
   return (
     <OrdersContext.Provider
       value={{
         orders,
         addOrder,
         getOrder,
+        toggleOrderStatus,
         isLoading,
         error,
         retry,
